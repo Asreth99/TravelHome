@@ -1,8 +1,9 @@
 
-import { BrowserRouter as Router, Route, Switch, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import NavigationBar from './Navbar/NavigationBar';
 import Search from './Search/Search';
+import Cities from './Components/Cities';
 
 
 function App() {
@@ -10,8 +11,10 @@ function App() {
     <Router>
       <div className="App">
         <NavigationBar />
+
        <Routes>
         <Route path='/' element = {<Search />} />
+        <Route path='/cities' element = {<Cities />} />
        </Routes>
 
       </div>
