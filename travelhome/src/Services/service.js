@@ -5,6 +5,10 @@ class Service{
         return JSON.parse(localStorage.getItem('allCities'));
     }
 
+    getFileteredPlaces(){
+        return JSON.parse(localStorage.getItem('FilteredPlaces'));
+    }
+
     
 }
 

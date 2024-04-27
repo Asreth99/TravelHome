@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Autocomplete from 'react-autocomplete'
 
 const Search = () => {
-  const [cityName, setCityName] = useState('');
+  const [cityName, setCityName] = useState('evosoft Hungary Kft., 11, Magyar tudósok körútja, Lágymányos, 11th district, Budapest, Central Hungary, 1117, Hungary');
   const [traveltime, settraveltime] = useState(1800);
   const [travelmode, settravelmode] = useState('driving');
   const [suggestions, setSuggestions] = useState([]);
@@ -27,21 +27,21 @@ const Search = () => {
         params: {
           cityName: inputValue,
         },
-      }).then((response)=>{
+      }).then((response) => {
         const cities = response.data.city;
-        if(cities && cities.length > 0){
-          setSuggestions([cities]); 
-          
-        }else{
+        if (cities && cities.length > 0) {
+          setSuggestions([cities]);
+
+        } else {
+
           setSuggestions([]);
         }
-        
+
       });
-      
+
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       setSuggestions([]);
-      
     }
   };
 
@@ -57,10 +57,11 @@ const Search = () => {
     })
       .then((response) => {
 
-        localStorage.removeItem("allCities");
-        localStorage.setItem("allCities", JSON.stringify(response.data));
 
-        navigate("/cities")
+        localStorage.setItem("allCities", JSON.stringify(response.data.allCities));
+        localStorage.setItem("FilteredPlaces", JSON.stringify(response.data.FilteredPlaces));
+
+        navigate("/cities");
       }).catch((error) => {
         console.error("Error: " + error);
       });
@@ -138,7 +139,6 @@ const Search = () => {
           <Row className="mt-3">
             <Col>
               <Button variant="warning" size="lg" onClick={() => {
-
                 handleSearch();
               }}>Keresés</Button>
             </Col>
