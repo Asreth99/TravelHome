@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom";
 import Autocomplete from 'react-autocomplete'
 
 const Search = () => {
-  const [cityName, setCityName] = useState('evosoft Hungary Kft., 11, Magyar tudósok körútja, Lágymányos, 11th district, Budapest, Central Hungary, 1117, Hungary');
-  const [traveltime, settraveltime] = useState(1800);
+  const [cityName, setCityName] = useState('evosoft, 5, Horváth Mihály utca, Belváros, Szeged, Szegedi járás, Csongrád-Csanád, South Great Plain, Great Plain and North, 6720, Hungary');
+  const [cityCoords, setCityCoords] = useState([46.2552141, 20.1513543]);
+  const [traveltime, settraveltime] = useState(600);
   const [travelmode, settravelmode] = useState('driving');
   const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
+  localStorage.removeItem('allCities');
 
 
 
@@ -23,14 +25,16 @@ const Search = () => {
 
   const fetchSuggestions = async (inputValue) => {
     try {
-      await axios.get("http://localhost:8080/citySearch", {
+      await axios.get("http://localhost:8080/autoCompleteSearch", {
         params: {
           cityName: inputValue,
         },
       }).then((response) => {
         const cities = response.data.city;
+        const cityCoords = response.data.cityCoordinates
         if (cities && cities.length > 0) {
           setSuggestions([cities]);
+          setCityCoords([cityCoords]);
 
         } else {
 
@@ -50,16 +54,16 @@ const Search = () => {
   const handleSearch = () => {
     axios.get("http://localhost:8080/geocodeSearch", {
       params: {
+        cityCoords : cityCoords,
         cityName: cityName,
         traveltime: traveltime,
         travelmode: travelmode,
       },
     })
       .then((response) => {
-
-
+        localStorage.setItem("selectedCityCoords",cityCoords);
         localStorage.setItem("allCities", JSON.stringify(response.data.allCities));
-        localStorage.setItem("FilteredPlaces", JSON.stringify(response.data.FilteredPlaces));
+        localStorage.setItem("isochrone", JSON.stringify(response.data.isochrone));
 
         navigate("/cities");
       }).catch((error) => {
@@ -94,7 +98,7 @@ const Search = () => {
                   setCityName(e.target.value);
                   fetchSuggestions(e.target.value);
                 }}
-                onSelect={(val) => setCityName(val)}
+                onSelect={(val) => {setCityName(val)}}
                 inputProps={{
                   style: {
                     width: '300px',

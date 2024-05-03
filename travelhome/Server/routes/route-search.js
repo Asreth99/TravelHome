@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { TravelTimeClient, } = require('traveltime-api');
 const { GeocodingSearchRequest } = require('traveltime-api/target/types');
+const fetch = require('node-fetch');
+const simplify = require('@turf/simplify').default;
 
 const travelTimeClient = new TravelTimeClient({
     apiKey: 'd19b8d77323ab20b2e69c8dd0aa908cb',
@@ -12,8 +14,10 @@ const travelTimeClient = new TravelTimeClient({
 
 
 
+let responseCities = [];
 
-router.get("/citySearch", async (req, res) => {
+
+router.get("/autoCompleteSearch", async (req, res) => {
     try {
         res.setHeader("Access-Control-Allow-Origin", "*");
         const cityName = req.query.cityName;
@@ -21,17 +25,14 @@ router.get("/citySearch", async (req, res) => {
 
         if (geocodeSearch.features.length > 0) {
             const city = geocodeSearch.features[0].properties.name;
-            console.log(city);
-            res.json({ city: city });
+            const cityCoordinates = geocodeSearch.features[0].geometry.coordinates.reverse();
+            res.json({ city: city, cityCoordinates: cityCoordinates });
         } else {
-            res.json({ city: null });
+            res.json({ city: null, cityCoordinates: null });
         }
     } catch (error) {
-        console.error(error);
-        res.json({ city: null });
+        res.json({ city: null, cityCoordinates: null });
     }
-
-
 });
 
 
@@ -42,9 +43,12 @@ router.get("/geocodeSearch", async (req, res) => {
     const travelmode = req.query.travelmode;
 
 
+
     res.setHeader("Access-Control-Allow-Origin", "*")
 
+
     //Getting the city coordinates
+
 
     const geocodeSearch = await travelTimeClient.geocoding(cityName);
     const coordinates = geocodeSearch.features[0].geometry.coordinates;
@@ -58,8 +62,7 @@ router.get("/geocodeSearch", async (req, res) => {
         travel_time: parseInt(traveltime),
         coords: { lat: coordinates[1], lng: coordinates[0] },
         transportation: { type: travelmode, disable_border_crossing: true },
-        level_of_detail: { scale_type: "simple", level: "medium" },
-        no_holes: true,
+        //level_of_detail: { scale_type: "coarse_grid", square_size: 600 },
     };
 
 
@@ -69,210 +72,96 @@ router.get("/geocodeSearch", async (req, res) => {
     });
 
 
+    const shapes = timeMapSearch.results[0].shapes;
+    const simplifiedShapes = shapes.map(shape => {
+        const geojson = {
+            type: "Feature",
+            geometry: {
+                type: "Polygon",
+                coordinates: [shape.shell.map(coord => [coord.lng, coord.lat])]
+            },
+            properties: {}
+        };
+        const options = { tolerance: 0.05 };
+        //simplify(geojson, options)
+
+        //return simplify(geojson, options);
+        return geojson;
+    });
 
 
+    const extractCitiesPromises = simplifiedShapes.map(async i => {
+        if (i.geometry.coordinates[0].length <= 50) {
+            return await extractCities(i.geometry.coordinates[0]);
+        } else {
+        
 
-    const allCity = await extractCities(timeMapSearch);
+            /* The maximum vertices of a polygon is 50. Can't Search with TOMTOM if the vertices greater than that, so i simplify enough to able to search */
+            let tolerance = 0.01;
+            while(i.geometry.coordinates[0].length > 50){  
+                const options = { tolerance: tolerance};
+                const simplifiedGeometry = simplify(i, options);
+                i.geometry.coordinates[0] = simplifiedGeometry.geometry.coordinates[0];
+                tolerance += 0.01;  
+            }
 
+            return await extractCities(i.geometry.coordinates[0]);
+        }
 
-    const result = await fetchCities(allCity);
+    });
 
-    /* 
-        allCity.forEach(i=>{
-            console.log(i);
-        }) */
-
-
-
-    res.json({ allCities: allCity, FilteredPlaces: result });
+    Promise.all(extractCitiesPromises)
+        .then(() => {
+            res.json({ allCities: responseCities, isochrone: timeMapSearch });
+            responseCities = [];
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            res.status(500).json({ error: 'An error occurred' });
+        });
 });
 
 
+const extractCities = async (polygon) => {
+    const coordinatesString = polygon.map(coord => `${coord[1]},${coord[0]}`);
+
+    const baseURL = 'https://api.tomtom.com/search/2/geometrySearch/{}.json';
+    const apiKey = 'djiCiL5L6GxVj3Kqt0XRDqwuUJovG6NL';
+    const idxSet = 'Geo';
+    const geometryList = JSON.stringify([
+        {
+            "type": "POLYGON",
+            "vertices": coordinatesString,
+        },
+    ]);
 
 
-const extractCities = async (result) => {
-    const allCoordinates = [];
-    let cities = [];
-    let markers = [];
-
-    if (!result || !result.results || !Array.isArray(result.results)) {
-        console.error("Invalid result format");
-        return allCoordinates;
-    }
-
-    result.results.forEach(resultItem => {
-        if (resultItem.shapes && Array.isArray(resultItem.shapes)) {
-
-            resultItem.shapes.forEach(shape => {
-                if (shape.shell && Array.isArray(shape.shell)) {
-                    allCoordinates.push(...shape.shell);
-
-                }
-
-
-            });
-        }
-    });
-
-
-    if (allCoordinates.length > 0) {
-        const reverseGeocodePromises = allCoordinates.map(async coords => {
-            try {
-                const reverseGeocodeRes = await travelTimeClient.geocodingReverse({
-                    lat: coords.lat,
-                    lng: coords.lng,
-                }, acceptLanguage = "HU");
-
-                const coordinates = reverseGeocodeRes.features[0].geometry.coordinates;
-                const placeData = reverseGeocodeRes.features[0].properties;
-                const local_admin = placeData.local_admin;
-                const name = placeData.name;
-                const city = placeData.city;
-                const town = placeData.town;
-                const district = placeData.district
-                const type = placeData.type;
-                const country_code = placeData.country_code;
-                const street = placeData.street;
-
-
-                if(street && street.includes('utca')){
-                    console.log(placeData);
-                }
-
-                
-
-               /*  if (type === 'residential' || type === 'square') {
-                    if (country_code === 'HUN') {
-                        if (!markers.includes(name)) {
-                            markers.push({
-                                name: name,
-                                coords: coordinates,
-                            });
-                        }
-
-                    }
-
-
-                } */
+    const url = `${baseURL}?key=${apiKey}&geometryList=${geometryList}&idxSet=${idxSet}&limit=${100}&entityTypeSet=Municipality,MunicipalitySubdivision,MunicipalitySecondarySubdivision`;
 
 
 
-                if (city && city !== undefined) {
-                    const existingCityIndex = cities.findIndex(item => item.city === city);
-
-                    if (existingCityIndex === -1) {
-                        cities.push({
-                            local_admin: local_admin ? local_admin : "",
-                            city,
-                            towns: town ? [town] : [],
-                            districts: district ? [district] : [],
-                        });
-                    } else {
-                        if (!cities[existingCityIndex].towns.includes(town) && town !== undefined) {
-                            cities[existingCityIndex].towns.push(town);
-                        }
-
-                        if (!cities[existingCityIndex].districts.includes(district) && district !== undefined) {
-                            cities[existingCityIndex].districts.push(district);
-                        }
-                    }
-                }
-
-                if (town && town !== undefined && district !== undefined) {
-                    const existingTownIndex = cities.findIndex(item => item.towns.includes(town));
-
-                    if (existingTownIndex === -1) {
-                        cities.push({
-                            local_admin: local_admin ? local_admin : "",
-                            towns: [town],
-                            districts: district ? [district] : [],
-                        });
-
-                    } else {
-                        if (!cities[existingTownIndex].districts.includes(district) && district !== undefined) {
-                            cities[existingTownIndex].districts.push(district);
-
-                        }
-                    }
-                }
-
-            } catch (error) {
-                console.error(error);
+    return fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.results) {
+                const addresses = data.results.map(result => {
+                    responseCities.push({
+                        city: result.address.freeformAddress,
+                        coordinate: result.position
+                    });
+                });
+                return addresses;
+            } else {
+                console.log("No results found.");
+                return [];
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            throw error;
         });
 
 
-
-        await Promise.all(reverseGeocodePromises);
-    }
-
-    /* markers.map(coord => {
-
-        const reversedCoord = coord.coords.reverse();
-        return { coords: reversedCoord, name: coord.name };
-    }); */
-
-
-    return cities;
-};
-
-
-
-const fetchCities = async (coords) => {
-    const city_coords = [];
-
-
-
-    if (!coords || !Array.isArray(coords)) {
-        console.error("Error fetching Cities");
-        return city_coords;
-    }
-
-    const FilterCoordinates = coords.map(async (city) => {
-        if (city.city) {
-            const geocodeSearch = await travelTimeClient.geocoding(city.city, { params: { "within.country": "HU" } });
-            if (geocodeSearch.features.length > 0) {
-                city_coords.push({ coords: geocodeSearch.features[0].geometry.coordinates, name: geocodeSearch.features[0].properties.name });
-            }
-
-        }
-
-        if (city.towns) {
-            const filterTown = city.towns.map(async (town) => {
-                const geocodeSearch = await travelTimeClient.geocoding(town, { params: { "within.country": "HU" } });
-                if (geocodeSearch.features.length > 0) {
-                    city_coords.push({ coords: geocodeSearch.features[0].geometry.coordinates, name: geocodeSearch.features[0].properties.name });
-                }
-            });
-
-            await Promise.all(filterTown);
-
-        }
-
-        if (city.districts) {
-            const filterDistrict = city.districts.map(async (district) => {
-                const name = district + " " + city.local_admin;
-                const geocodeSearch = await travelTimeClient.geocoding(name, { params: { "within.country": "HU" } });
-                if (geocodeSearch.features.length > 0) {
-                    city_coords.push({ coords: geocodeSearch.features[0].geometry.coordinates, name: geocodeSearch.features[0].properties.name });
-                }
-            });
-            await Promise.all(filterDistrict);
-
-        }
-
-    });
-
-    await Promise.all(FilterCoordinates);
-
-
-    const reversedCoords = city_coords.map(coord => {
-        const reversedCoord = coord.coords.reverse();
-        return { coords: reversedCoord, name: coord.name };
-    });
-
-
-    return reversedCoords;
 
 };
 

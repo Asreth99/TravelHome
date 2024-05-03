@@ -4,28 +4,58 @@ import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import axios from "axios";
+import MarkerClusterGroup from 'react-leaflet-cluster';
+
 import "leaflet/dist/leaflet.css";
-import { Icon, marker } from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { Icon } from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
 
 const Cities = () => {
+  const simplify = require('@turf/simplify').default;
   const [cities, setCities] = useState(null);
-  const [coords, setCoords] = useState(null);
+  const [selectedCityCoords, setSelectedCityCoords] = useState(null);
+  const [timeMapSearch, setTimeMapSearch] = useState(null);
+
+  //const [coords, setCoords] = useState(null);
+
+
 
 
 
   useEffect(() => {
+    const timeMapSearchData = JSON.parse(localStorage.getItem('isochrone'));
+    const selectedCity = localStorage.getItem("selectedCityCoords");
     const storedCities = service.getCities();
-    const filteredPlaces = service.getFileteredPlaces();
+
+    if (timeMapSearchData) {
+      const shapes = timeMapSearchData.results[0].shapes;
+      const simplifiedShapes = shapes.map(shape => {
+        const geojson = {
+          type: "Feature",
+          geometry: {
+            type: "Polygon",
+            coordinates: [shape.shell.map(coord => [coord.lng, coord.lat])]
+          },
+          properties: {}
+        };
+        const options = { tolerance: 0.05, highQuality: false };
+        //simplify(geojson, options)
+        //return simplify(geojson, options);
+        return geojson;
+      });
+      setTimeMapSearch(simplifiedShapes);
+    }
+
+    if (selectedCity) {
+      const coords = selectedCity.split(',').map(parseFloat);
+      setSelectedCityCoords(coords);
+    }
 
     if (storedCities) {
       setCities(storedCities);
     }
 
-    if (filteredPlaces) {
-      setCoords(filteredPlaces);
-    }
+
   }, []);
 
 
@@ -33,89 +63,112 @@ const Cities = () => {
 
 
 
-
-
-
-
-  const getIngatlanComURL = (city, town, district) => {
-    const baseURL = "https://ingatlan.com/lista/kiado+lakas+";
-    let formatDistrict = "";
-
-    district.forEach(districtItem => {
-      if (districtItem && districtItem !== null) {
-        let formattedDistrict = districtItem
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/\s+/g, "-")
-          .replace(/\./g, "");
-
-
-
-        if (city.toLowerCase() === "budapest") {
-          formattedDistrict = formattedDistrict.replace("kerulet", "ker");
-          formatDistrict += formattedDistrict + "+";
-        } else {
-          const formatCity = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          formatDistrict += formatCity + "-" + formattedDistrict + "+";
-        }
-      }
-    });
-
-    //console.log("URL: " + baseURL + formatDistrict);
-    window.open(baseURL + formatDistrict, '_blank');
-  }
-
-
+  /* Marker Icons */
   const customIcon = new Icon({
     iconUrl: require('../Icon/location-pin.png'),
     iconSize: [50, 50],
     iconAnchor: [24, 47]
   });
 
+  const centerIcon = new Icon({
+    iconUrl: require('../Icon/searched_location_pin.png'),
+    iconSize: [60, 60],
+    iconAnchor: [30, 58]
+  });
+
+
+  const getIngatlanURL = (city) => {
+    const cityNameWithoutAccents = removeAccents(city.city.toLowerCase());
+    const formattedCityName = cityNameWithoutAccents.split(',');
+    let formattedCity = formattedCityName;
+    if(formattedCityName.length >= 2){
+      formattedCity =`${formattedCityName[1].trim()}-${formattedCityName[0].trim()}`
+    }
+    const ingatlanURL =`https://ingatlan.com/lista/kiado+lakas+${formattedCity}`;
+    console.log(ingatlanURL);
+    window.open(ingatlanURL, '_blank');
+  };
+
+  const removeAccents = (str) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
+  //[47.5422594, 21.6070813]
   return (
     <>
       <h1>Minden Elérhető Város:</h1>
 
-      <><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" /><div className="App">
-          <MapContainer center={[46.65, 21.28333]} zoom={13} scrollWheelZoom={true}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      {/* REACHABLE CITIES IN CARDS */}
 
-            {coords && coords.map((marker, index) => (
-              <Marker key={index} position={marker.coords} icon={customIcon}>
-                <Popup>{marker.name}</Popup>
-              </Marker>
+      <Row>
+        <Col>
+          <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
+            {cities && cities.map((city, index) => (
+              <Card key={index} style={{ marginLeft: '5rem', marginRight: 'auto', marginBottom: '2rem', width: '18rem' }} className="shadow-sm p- bg-white rounded">
+                <Card.Body>
+                  <Card.Text>
+                    {city.city && <><strong>Város:</strong> {city.city} <br /></>}
+                    {city.towns && city.towns.length > 0 && <><strong>Kisváros:</strong> {city.towns.join(", ")} <br /></>}
+                    {city.districts && city.districts.filter(Boolean).length > 0 && (
+                      <>
+                        <strong>Körzet:</strong> {city.districts.join(", ")} <br /><br />
+                      </>
+                    )}
+                  </Card.Text>
+                  <Button variant="primary" onClick={() => { getIngatlanURL(city); }}>Ingatlanok Megtekintése</Button>
+                </Card.Body>
+              </Card>
             ))}
-
-          </MapContainer>
-        </div></>
-
-      {/* <Row style={{ padding: '1rem', alignItems: 'center', justifyContent: 'center' }}>
-        {cities && cities.map((city, index) => (
-          <Col key={index} md={4}>
-            {<Card style={{ margin: '2rem', width: '18rem' }} className="shadow-sm p-3 mb-5 bg-white rounded">
-              <Card.Body>
-                <Card.Text>
-                  {city.city && <><strong>Város:</strong> {city.city} <br /></>}
-                  {city.towns && city.towns.length > 0 && <><strong>Kisváros:</strong> {city.towns.join(", ")} <br /></>}
-                  {city.districts && city.districts.filter(Boolean).length > 0 && (
-                    <>
-                      <strong>Körzet:</strong> {city.districts.join(", ")} <br /><br />
-                    </>
-                  )}
-                </Card.Text>
-                <Button variant="primary" onClick={() => { getIngatlanComURL(city.city, city.towns, city.districts) }}>Ingatlanok Megtekintése</Button>
-              </Card.Body>
-            </Card>}
+          </div>
+        </Col>
 
 
+        {/* SHOWING MAP BESIDE MARKERS */}
+        <Col>
+          <><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" /><div className="App">
+              {selectedCityCoords && (
+                <MapContainer center={selectedCityCoords} zoom={13} scrollWheelZoom={true}>
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-          </Col>
-        ))}
-      </Row> */}
+                  {/* Cities markers */}
+
+                  <Marker position={selectedCityCoords} icon={centerIcon}>
+                    <Popup>This is Your Search</Popup>
+                  </Marker>
+
+                  <MarkerClusterGroup>
+                    {cities && cities.map((city, index) => (
+                      <Marker key={index} position={city.coordinate} icon={customIcon}>
+                        <Popup>{city.city}</Popup>
+                      </Marker>
+                    ))}
+                  </MarkerClusterGroup>
+
+                  {/* Isochrone Polygon */}
+                  {timeMapSearch && timeMapSearch.map((data, index) => (
+                    <GeoJSON
+                      key={index}
+                      data={data}
+                      style={() => ({
+                        color: 'red',
+                        fillColor: 'black',
+                        fillOpacity: 0.1
+                      })}
+                    />
+                  ))}
+
+                </MapContainer>
+              )}
+            </div></>
+        </Col>
+
+
+
+      </Row>
+
 
 
     </>
