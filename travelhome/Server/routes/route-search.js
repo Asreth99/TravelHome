@@ -66,6 +66,9 @@ router.get("/geocodeSearch", async (req, res) => {
     };
 
 
+
+
+
     //Isochrone timeMap search request
     const timeMapSearch = await travelTimeClient.timeMap({
         departure_searches: [departure_search1],
@@ -94,15 +97,15 @@ router.get("/geocodeSearch", async (req, res) => {
         if (i.geometry.coordinates[0].length <= 50) {
             return await extractCities(i.geometry.coordinates[0]);
         } else {
-        
+
 
             /* The maximum vertices of a polygon is 50. Can't Search with TOMTOM if the vertices greater than that, so i simplify enough to able to search */
             let tolerance = 0.01;
-            while(i.geometry.coordinates[0].length > 50){  
-                const options = { tolerance: tolerance};
+            while (i.geometry.coordinates[0].length > 50) {
+                const options = { tolerance: tolerance };
                 const simplifiedGeometry = simplify(i, options);
                 i.geometry.coordinates[0] = simplifiedGeometry.geometry.coordinates[0];
-                tolerance += 0.01;  
+                tolerance += 0.01;
             }
 
             return await extractCities(i.geometry.coordinates[0]);
@@ -110,8 +113,72 @@ router.get("/geocodeSearch", async (req, res) => {
 
     });
 
+
+
+
+
+
+
     Promise.all(extractCitiesPromises)
-        .then(() => {
+        .then(async () => {
+
+            const arrival_searches = responseCities.map(city => {
+                return {
+                    id: city.city,
+                    coords: { lat: city.coordinate.lat, lng: city.coordinate.lon }
+                };
+            });
+
+            if (responseCities.length !== 0) {
+
+                
+                arrival_searches.unshift({
+                    id: cityName,
+                    coords: { lat: coordinates[1], lng: coordinates[0] }
+                });
+
+                let arrival_location_ids = [];
+
+                arrival_searches.forEach(i => {
+                    arrival_location_ids.push(i.id);
+                });
+                //console.log(arrival_searches.forEach(i=>{console.log(i.id)}));
+
+                const departure_search = {
+                    id: 'forward search example',
+                    departure_location_id: cityName,
+                    arrival_location_ids: arrival_location_ids,
+                    transportation: {
+                        type: travelmode
+                    },
+                    departure_time: new Date().toISOString(),
+                    travel_time: 1800,
+                    properties: ['travel_time'],
+                    range: { enabled: true, max_results: 3, width: 600 },
+                };
+
+
+
+               
+
+                const distanceMatrix = await travelTimeClient.timeFilter({
+                    locations: arrival_searches,
+                    departure_searches: [departure_search]
+
+                });
+
+            
+
+                distanceMatrix.results[0].locations.forEach(location => {
+                    const cityIndex = responseCities.findIndex(city => city.city === location.id);
+
+                    if (cityIndex !== -1) {
+                        responseCities[cityIndex].travel_time = location.properties[0].travel_time;
+                    }
+                });
+
+            }
+
             res.json({ allCities: responseCities, isochrone: timeMapSearch });
             responseCities = [];
         })

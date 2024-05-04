@@ -74,7 +74,8 @@ const Cities = () => {
     }
 
     if (storedCities) {
-      setCities(storedCities);
+      const sortedCities = storedCities.sort((a, b) => a.travel_time - b.travel_time);
+      setCities(sortedCities);
     }
 
 
@@ -83,7 +84,10 @@ const Cities = () => {
 
 
 
-
+  if(cities){
+    
+    console.log(cities);
+  }
 
   /* Marker Icons */
   const customIcon = new Icon({
@@ -148,12 +152,8 @@ const Cities = () => {
                 <Card.Body>
                   <Card.Text>
                     {city.city && <><strong>Város:</strong> {city.city} <br /></>}
-                    {city.towns && city.towns.length > 0 && <><strong>Kisváros:</strong> {city.towns.join(", ")} <br /></>}
-                    {city.districts && city.districts.filter(Boolean).length > 0 && (
-                      <>
-                        <strong>Körzet:</strong> {city.districts.join(", ")} <br /><br />
-                      </>
-                    )}
+                    {city.city && <>{Math.round(city.travel_time / 60)}<strong>min</strong><br /></>}
+
                   </Card.Text>
                   <Button variant="primary" onClick={() => { getIngatlanURL(city); }}>Ingatlanok Megtekintése</Button>
                 </Card.Body>
