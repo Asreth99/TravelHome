@@ -12,6 +12,7 @@
     "bootstrap": "^5.3.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "firebase": "^10.11.1",
     "leaflet": "^1.9.4",
     "link": "^2.1.0",
     "node-libcurl": "^4.0.0",

@@ -4,12 +4,15 @@ import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Autocomplete from 'react-autocomplete'
 
+
 const Search = () => {
   const [cityName, setCityName] = useState('evosoft, 5, Horváth Mihály utca, Belváros, Szeged, Szegedi járás, Csongrád-Csanád, South Great Plain, Great Plain and North, 6720, Hungary');
   const [cityCoords, setCityCoords] = useState([46.2552141, 20.1513543]);
   const [traveltime, settraveltime] = useState(600);
   const [travelmode, settravelmode] = useState('driving');
   const [suggestions, setSuggestions] = useState([]);
+
+
   const navigate = useNavigate();
   localStorage.removeItem('allCities');
 
@@ -54,14 +57,18 @@ const Search = () => {
   const handleSearch = () => {
     axios.get("http://localhost:8080/geocodeSearch", {
       params: {
-        cityCoords : cityCoords,
         cityName: cityName,
         traveltime: traveltime,
         travelmode: travelmode,
       },
     })
       .then((response) => {
+
         localStorage.setItem("selectedCityCoords",cityCoords);
+        localStorage.setItem("cityName",cityName);
+        localStorage.setItem("travelTime",traveltime);
+        localStorage.setItem("travelMode",travelmode);
+
         localStorage.setItem("allCities", JSON.stringify(response.data.allCities));
         localStorage.setItem("isochrone", JSON.stringify(response.data.isochrone));
 

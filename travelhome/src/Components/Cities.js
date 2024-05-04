@@ -10,11 +10,23 @@ import "leaflet/dist/leaflet.css";
 import { Icon } from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
 
+import { database } from "../Services/Contexts/firebase/firebase";
+import { collection,addDoc } from "firebase/firestore";
+import { useAuth } from "../Services/Contexts/authContext/index.js"
+
+
 const Cities = () => {
   const simplify = require('@turf/simplify').default;
   const [cities, setCities] = useState(null);
   const [selectedCityCoords, setSelectedCityCoords] = useState(null);
   const [timeMapSearch, setTimeMapSearch] = useState(null);
+
+  const [searchedCity, setSearchedCity] = useState(null);
+  const [travelTime, settravelTime] = useState(null);
+  const [travelMode, settravelMode] = useState(null);
+
+  const { currentUser } = useAuth();
+
 
   //const [coords, setCoords] = useState(null);
 
@@ -26,6 +38,16 @@ const Cities = () => {
     const timeMapSearchData = JSON.parse(localStorage.getItem('isochrone'));
     const selectedCity = localStorage.getItem("selectedCityCoords");
     const storedCities = service.getCities();
+
+    const cityName = localStorage.getItem("cityName");
+    const travelTime = localStorage.getItem("travelTime");
+    const travelMode = localStorage.getItem("travelMode");
+
+    if (cityName && travelTime && travelMode) {
+      setSearchedCity(cityName);
+      settravelTime(travelTime);
+      settravelMode(travelMode);
+    }
 
     if (timeMapSearchData) {
       const shapes = timeMapSearchData.results[0].shapes;
@@ -77,14 +99,32 @@ const Cities = () => {
   });
 
 
+  const saveSearch = async (cityName, travelTime, travelMode) => {
+    try{
+
+
+      const userID = currentUser.uid
+      const docRef = await addDoc(collection(database, userID),{
+        cityName: cityName,
+        coords: selectedCityCoords,
+        travelTime: travelTime,
+        travelMode: travelMode
+      });
+      console.log("Document written with ID: ", docRef.id);
+    }catch(e){
+      console.error("Error adding document: ", e);
+    }
+
+  };
+
   const getIngatlanURL = (city) => {
     const cityNameWithoutAccents = removeAccents(city.city.toLowerCase());
     const formattedCityName = cityNameWithoutAccents.split(',');
     let formattedCity = formattedCityName;
-    if(formattedCityName.length >= 2){
-      formattedCity =`${formattedCityName[1].trim()}-${formattedCityName[0].trim()}`
+    if (formattedCityName.length >= 2) {
+      formattedCity = `${formattedCityName[1].trim()}-${formattedCityName[0].trim()}`
     }
-    const ingatlanURL =`https://ingatlan.com/lista/kiado+lakas+${formattedCity}`;
+    const ingatlanURL = `https://ingatlan.com/lista/kiado+lakas+${formattedCity}`;
     console.log(ingatlanURL);
     window.open(ingatlanURL, '_blank');
   };
@@ -120,7 +160,9 @@ const Cities = () => {
               </Card>
             ))}
           </div>
+          <Button variant="primary" onClick={() => {saveSearch(searchedCity,travelTime,travelMode)}}>Keresés Mentése</Button>
         </Col>
+
 
 
         {/* SHOWING MAP BESIDE MARKERS */}
