@@ -40,9 +40,10 @@ function App() {
   ];
   let routesElement = useRoutes(routesArray);
   return (
+    
       <AuthProvider>
         <NavigationBar/>
-        <div className="w-full h-screen flex flex-col">{routesElement}</div>
+        <div className="w-full flex flex-col z-20">{routesElement}</div>
       </AuthProvider>
   );
 }

@@ -11,7 +11,7 @@ import { Icon } from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
 
 import { database } from "../Services/Contexts/firebase/firebase";
-import { collection,addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { useAuth } from "../Services/Contexts/authContext/index.js"
 
 
@@ -84,10 +84,7 @@ const Cities = () => {
 
 
 
-  if(cities){
-    
-    console.log(cities);
-  }
+ 
 
   /* Marker Icons */
   const customIcon = new Icon({
@@ -104,18 +101,18 @@ const Cities = () => {
 
 
   const saveSearch = async (cityName, travelTime, travelMode) => {
-    try{
+    try {
 
 
       const userID = currentUser.uid
-      const docRef = await addDoc(collection(database, userID),{
+      const docRef = await addDoc(collection(database, userID), {
         cityName: cityName,
         coords: selectedCityCoords,
         travelTime: travelTime,
         travelMode: travelMode
       });
       console.log("Document written with ID: ", docRef.id);
-    }catch(e){
+    } catch (e) {
       console.error("Error adding document: ", e);
     }
 
@@ -140,81 +137,87 @@ const Cities = () => {
   //[47.5422594, 21.6070813]
   return (
     <>
-      <h1>Minden Elérhető Város:</h1>
+      <button className="btn bg-primary text-black w-fit">Keresés Mentése</button>
+      <div className="flex items-center justify-center h-screen z-0">
 
-      {/* REACHABLE CITIES IN CARDS */}
+        {/* REACHABLE CITIES IN CARDS */}
+        {/*  <div className="flex-initial overflow-auto h-4/5">
+          {cities && cities.map((city, index) => (
+            <div className="indicator">
+              <span className="indicator-item indicator-top indicator-end badge badge-secondary"><strong>{Math.round(city.travel_time / 60)}min</strong></span>
+              <div className="card w-full bg-white w-60 shadow-2xl mb-5 ml-8" key={index}>
+                <div className="card-body text-black">
+                  {city.city && <><strong>{city.city}</strong> <br /></>}
+                </div>
+                <button className="btn bg-primary text-black w-60" onClick={() => { getIngatlanURL(city); }}>Ingatlanok Megtekintése</button>
+              </div>
+            </div>
+          ))}
+        </div> */}
 
-      <Row>
-        <Col>
-          <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
-            {cities && cities.map((city, index) => (
-              <Card key={index} style={{ marginLeft: '5rem', marginRight: 'auto', marginBottom: '2rem', width: '18rem' }} className="shadow-sm p- bg-white rounded">
-                <Card.Body>
-                  <Card.Text>
-                    {city.city && <><strong>Város:</strong> {city.city} <br /></>}
-                    {city.city && <>{Math.round(city.travel_time / 60)}<strong>min</strong><br /></>}
-
-                  </Card.Text>
-                  <Button variant="primary" onClick={() => { getIngatlanURL(city); }}>Ingatlanok Megtekintése</Button>
-                </Card.Body>
-              </Card>
-            ))}
+        <div className="h-screen flex flex-col items-center justify-center">
+          <div>
+            <button className="btn bg-primary text-black w-fit" onClick={() => { saveSearch(searchedCity,travelMode,travelTime); }}>Keresés Mentése</button>
           </div>
-          <Button variant="primary" onClick={() => {saveSearch(searchedCity,travelTime,travelMode)}}>Keresés Mentése</Button>
-        </Col>
 
-
-
+          <div className="overflow-auto h-3/4 w-fit p-4 mt-auto mb-auto">
+            <table className="table">
+              {cities && cities.map((city, index) => (
+                <tr className="hover" key={index}>
+                  <th>{index}</th>
+                  <td>{city.city && <><strong>{city.city}</strong> <br /></>}</td>
+                  <td><button className="btn bg-primary text-black w-fit" onClick={() => { getIngatlanURL(city); }}>Ingatlan.com</button></td>
+                  <td><button className="btn bg-primary text-black w-fit" onClick={() => { getIngatlanURL(city); }}>koltozzbe.hu</button></td>
+                  <td className="flex w-fit mt-auto"><span className="badge badge-secondary"><strong>{Math.round(city.travel_time / 60)}  perc</strong></span></td>
+                </tr>
+              ))}
+            </table>
+          </div>
+        </div>
         {/* SHOWING MAP BESIDE MARKERS */}
-        <Col>
-          <><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" /><div className="App">
-              {selectedCityCoords && (
-                <MapContainer center={selectedCityCoords} zoom={13} scrollWheelZoom={true}>
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                  {/* Cities markers */}
+        <div className="flex-1">
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" />
+          <div className="App">
+            {selectedCityCoords && (
+              <MapContainer center={selectedCityCoords} zoom={13} scrollWheelZoom={true}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-                  <Marker position={selectedCityCoords} icon={centerIcon}>
-                    <Popup>This is Your Search</Popup>
-                  </Marker>
+                {/* Cities markers */}
 
-                  <MarkerClusterGroup>
-                    {cities && cities.map((city, index) => (
-                      <Marker key={index} position={city.coordinate} icon={customIcon}>
-                        <Popup>{city.city}</Popup>
-                      </Marker>
-                    ))}
-                  </MarkerClusterGroup>
+                <Marker position={selectedCityCoords} icon={centerIcon}>
+                  <Popup>This is Your Search</Popup>
+                </Marker>
 
-                  {/* Isochrone Polygon */}
-                  {timeMapSearch && timeMapSearch.map((data, index) => (
-                    <GeoJSON
-                      key={index}
-                      data={data}
-                      style={() => ({
-                        color: 'red',
-                        fillColor: 'black',
-                        fillOpacity: 0.1
-                      })}
-                    />
+                <MarkerClusterGroup>
+                  {cities && cities.map((city, index) => (
+                    <Marker key={index} position={city.coordinate} icon={customIcon}>
+                      <Popup>{city.city}</Popup>
+                    </Marker>
                   ))}
+                </MarkerClusterGroup>
 
-                </MapContainer>
-              )}
-            </div></>
-        </Col>
+                {/* Isochrone Polygon */}
+                {timeMapSearch && timeMapSearch.map((data, index) => (
+                  <GeoJSON
+                    key={index}
+                    data={data}
+                    style={() => ({
+                      color: 'black',
+                      fillColor: 'black',
+                      fillOpacity: 0.1
+                    })} />
+                ))}
 
-
-
-      </Row>
-
-
-
-    </>
+              </MapContainer>
+            )}
+          </div>
+        </div>
+      </div></>
   );
+
 }
 
 export default Cities;
