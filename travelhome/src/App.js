@@ -1,5 +1,4 @@
 
-import { BrowserRouter as Router } from "react-router-dom";
 import { useRoutes } from "react-router-dom";
 import './App.css';
 import NavigationBar from './Navbar/NavigationBar';
@@ -9,7 +8,6 @@ import Login from './Components/Login';
 import Register from "./Components/Register.js";
 import { AuthProvider } from "./Services/Contexts/authContext/index.js";
 import SavedProperties from "./Components/SavedProperties.js";
-import Alert from "./Components/AlertMessage.js";
 
 
 function App() {

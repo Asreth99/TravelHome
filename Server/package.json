@@ -1,0 +1,31 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node index"
+  },
+  "dependencies": {
+    "@turf/turf": "^6.5.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "build": "^0.1.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.5.1",
+    "traveltime-api": "^5.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

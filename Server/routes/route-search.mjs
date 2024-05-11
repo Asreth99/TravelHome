@@ -1,8 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { TravelTimeClient, } = require('traveltime-api');
-const fetch = require('node-fetch');
-const simplify = require('@turf/simplify').default;
+import express from 'express';
+import { Router } from 'express';
+const router = Router();
+import { TravelTimeClient } from 'traveltime-api';
+import fetch from 'node-fetch';
+import simplify from '@turf/simplify';
 
 const travelTimeClient = new TravelTimeClient({
     apiKey: 'd19b8d77323ab20b2e69c8dd0aa908cb',
@@ -253,4 +254,4 @@ const extractCities = async (polygon) => {
 
 
 
-module.exports = router;
+export default router;
