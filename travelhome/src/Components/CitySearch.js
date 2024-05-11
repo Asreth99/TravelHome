@@ -77,7 +77,7 @@ const CitySearch = ({ city, travelTime, travelMode, cityCoordinates, setError, s
 
   const fetchSuggestions = async (inputValue) => {
     try {
-      await axios.get("http://localhost:8080/autoCompleteSearch", {
+      await axios.get("https://travelhome.onrender.com/autoCompleteSearch", {
         params: {
           cityName: inputValue,
         },
@@ -107,7 +107,7 @@ const CitySearch = ({ city, travelTime, travelMode, cityCoordinates, setError, s
 
   const handleSearch = () => {
     console.log("cityname: " + cityName + " travelTime: " + traveltime + " travelmode: " + travelmode);
-    axios.get("http://localhost:8080/geocodeSearch", {
+    axios.get("https://travelhome.onrender.com/geocodeSearch", {
       params: {
         cityName: cityName,
         traveltime: traveltime,

@@ -35,7 +35,7 @@ const SavedProperties = () => {
     };
 
     const handleSearch = (cityName, traveltime, travelmode, coords) => {
-        axios.get("http://localhost:8080/geocodeSearch", {
+        axios.get("https://travelhome.onrender.com/geocodeSearch", {
             params: {
                 cityName: cityName,
                 traveltime: traveltime,
