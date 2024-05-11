@@ -1,50 +1,85 @@
-import service from "../Services/service";
 import React, { useEffect, useState } from "react";
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 
 import "leaflet/dist/leaflet.css";
 import { Icon } from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
 
-import { database } from "../Services/Contexts/firebase/firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { useAuth } from "../Services/Contexts/authContext/index.js"
 
+import { useAuth } from "../Services/Contexts/authContext/index.js";
+import Alert from "../Components/AlertMessage";
+import CitySearch from "./CitySearch.js";
+import BottomMenu from "./BottomMenu.js";
+import { ChevronDoubleUpIcon } from '@heroicons/react/24/solid';
+import { MagnifyingGlassCircleIcon } from '@heroicons/react/24/solid';
+import BottomSearhMenu from "./BottomSearchMenu.js";
+import Toast from "./ToastMessage.js";
+
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    setMatches(mediaQuery.matches);
+
+    const handler = (event) => setMatches(event.matches);
+    mediaQuery.addEventListener('change', handler);
+
+
+  }, [query]);
+
+  return matches;
+};
 
 const Cities = () => {
-  const simplify = require('@turf/simplify').default;
+  const isMobile = useMediaQuery('(max-width: 600px)');
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isSearhMenuVisible, setIsSearhMenuVisible] = useState(false);
+
   const [cities, setCities] = useState(null);
   const [selectedCityCoords, setSelectedCityCoords] = useState(null);
   const [timeMapSearch, setTimeMapSearch] = useState(null);
 
-  const [searchedCity, setSearchedCity] = useState(null);
+  const [searchedCityName, setSearchedCityName] = useState('');
   const [travelTime, settravelTime] = useState(null);
-  const [travelMode, settravelMode] = useState(null);
+  const [travelMode, settravelMode] = useState('');
+
+
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [FeedbackMessage, setFeedbackMessage] = useState('');
+
+  
+  const [showError, setShowError] = useState(false);
+  const [ErrorMessage, setErrorMessage] = useState('');
+
+
 
   const { currentUser } = useAuth();
 
-
-  //const [coords, setCoords] = useState(null);
-
-
+  useEffect(() => {
+    if (showError) {
+      setTimeout(() => {
+        setShowError(false);
+      }, 3000);
+    }
+  }, [showError]);
 
 
 
   useEffect(() => {
     const timeMapSearchData = JSON.parse(localStorage.getItem('isochrone'));
-    const selectedCity = localStorage.getItem("selectedCityCoords");
-    const storedCities = service.getCities();
+    const selectedCityCoords = localStorage.getItem("selectedCityCoords");
+    const storedCities = JSON.parse(localStorage.getItem('allCities'));;
+    const storedCities2 = JSON.parse(localStorage.getItem('allCities2'));;
 
     const cityName = localStorage.getItem("cityName");
     const travelTime = localStorage.getItem("travelTime");
     const travelMode = localStorage.getItem("travelMode");
 
+
+
     if (cityName && travelTime && travelMode) {
-      setSearchedCity(cityName);
+      setSearchedCityName(cityName);
       settravelTime(travelTime);
       settravelMode(travelMode);
     }
@@ -60,22 +95,26 @@ const Cities = () => {
           },
           properties: {}
         };
-        const options = { tolerance: 0.05, highQuality: false };
-        //simplify(geojson, options)
-        //return simplify(geojson, options);
+
         return geojson;
       });
       setTimeMapSearch(simplifiedShapes);
     }
 
-    if (selectedCity) {
-      const coords = selectedCity.split(',').map(parseFloat);
+    if (selectedCityCoords) {
+      const coords = selectedCityCoords.split(',').map(parseFloat);
       setSelectedCityCoords(coords);
     }
 
+    if (storedCities2) {
+      const sortedCities = storedCities2.sort((a, b) => a.travel_time - b.travel_time);
+      setCities(sortedCities);
+
+    }
     if (storedCities) {
       const sortedCities = storedCities.sort((a, b) => a.travel_time - b.travel_time);
       setCities(sortedCities);
+
     }
 
 
@@ -83,8 +122,6 @@ const Cities = () => {
 
 
 
-
- 
 
   /* Marker Icons */
   const customIcon = new Icon({
@@ -100,79 +137,100 @@ const Cities = () => {
   });
 
 
-  const saveSearch = async (cityName, travelTime, travelMode) => {
-    try {
-
-
-      const userID = currentUser.uid
-      const docRef = await addDoc(collection(database, userID), {
-        cityName: cityName,
-        coords: selectedCityCoords,
-        travelTime: travelTime,
-        travelMode: travelMode
-      });
-      console.log("Document written with ID: ", docRef.id);
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-
-  };
 
   const getIngatlanURL = (city) => {
     const cityNameWithoutAccents = removeAccents(city.city.toLowerCase());
     const formattedCityName = cityNameWithoutAccents.split(',');
     let formattedCity = formattedCityName;
     if (formattedCityName.length >= 2) {
-      formattedCity = `${formattedCityName[1].trim()}-${formattedCityName[0].trim()}`
+      formattedCity = formattedCityName.map(namePart => {
+        let parts = namePart.trim().split(/[\s-]+/);
+        if (parts[1] === 'kertek') {
+          parts = [parts[0] + parts[1], ...parts.slice(2)];
+        }
+        console.log(parts);
+        return parts.join('-');
+      });
+      formattedCity = `${formattedCity[1]}-${formattedCity[0]}`;
     }
     const ingatlanURL = `https://ingatlan.com/lista/kiado+lakas+${formattedCity}`;
-    console.log(ingatlanURL);
     window.open(ingatlanURL, '_blank');
   };
+
+  const getOtpOtthonURL = (city) => {
+    const cityNameWithoutAccents = removeAccents(city.city.toLowerCase());
+    const formattedCityName = cityNameWithoutAccents.split(',');
+    let formattedCity = formattedCityName;
+    if (formattedCityName.length >= 2) {
+      formattedCity = formattedCityName.map(namePart => {
+        let parts = namePart.trim().split(/[\s-]+/);
+        if (parts[1] === 'kertek') {
+          parts = [parts[0] + parts[1], ...parts.slice(2)];
+        }
+        return parts.join('-');
+      });
+      formattedCity = `${formattedCity[1]}-${formattedCity[0]}`;
+    }
+
+    const URL = `https://www.otpotthon.hu/${formattedCity}+kiado+lakas`;
+
+    window.open(URL, '_blank');
+  }
 
   const removeAccents = (str) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  //[47.5422594, 21.6070813]
+  if (showError) {
+    console.log(showError);
+  }
+
+
+  /* if (minPrice) {
+    console.log(minPrice);
+  } */
+
   return (
     <>
-      <button className="btn bg-primary text-black w-fit">Keresés Mentése</button>
-      <div className="flex items-center justify-center h-screen z-0">
+      {showError &&
+        <Alert error={showError} message={ErrorMessage} />
+      }
 
-        {/* REACHABLE CITIES IN CARDS */}
-        {/*  <div className="flex-initial overflow-auto h-4/5">
-          {cities && cities.map((city, index) => (
-            <div className="indicator">
-              <span className="indicator-item indicator-top indicator-end badge badge-secondary"><strong>{Math.round(city.travel_time / 60)}min</strong></span>
-              <div className="card w-full bg-white w-60 shadow-2xl mb-5 ml-8" key={index}>
-                <div className="card-body text-black">
-                  {city.city && <><strong>{city.city}</strong> <br /></>}
-                </div>
-                <button className="btn bg-primary text-black w-60" onClick={() => { getIngatlanURL(city); }}>Ingatlanok Megtekintése</button>
-              </div>
-            </div>
-          ))}
-        </div> */}
+      {showFeedback &&
+        <Toast feedback={showFeedback} message={FeedbackMessage}/>
+      }
+      <div className="flex items-center justify-center h-screen z-0 ">
 
         <div className="h-screen flex flex-col items-center justify-center">
-          <div>
-            <button className="btn bg-primary text-black w-fit" onClick={() => { saveSearch(searchedCity,travelMode,travelTime); }}>Keresés Mentése</button>
-          </div>
+          {searchedCityName && !isMobile &&
+            <CitySearch
+              city={searchedCityName}
+              travelTime={travelTime}
+              travelMode={travelMode}
+              cityCoordinates={selectedCityCoords}
+              setFdbck={setShowFeedback}
+              setFeedbackMsg={setFeedbackMessage}
+              setError={setShowError}
+              setErrorMessage={setErrorMessage}
+            />
+          }
 
-          <div className="overflow-auto h-3/4 w-fit p-4 mt-auto mb-auto">
-            <table className="table">
-              {cities && cities.map((city, index) => (
-                <tr className="hover" key={index}>
-                  <th>{index}</th>
-                  <td>{city.city && <><strong>{city.city}</strong> <br /></>}</td>
-                  <td><button className="btn bg-primary text-black w-fit" onClick={() => { getIngatlanURL(city); }}>Ingatlan.com</button></td>
-                  <td><button className="btn bg-primary text-black w-fit" onClick={() => { getIngatlanURL(city); }}>koltozzbe.hu</button></td>
-                  <td className="flex w-fit mt-auto"><span className="badge badge-secondary"><strong>{Math.round(city.travel_time / 60)}  perc</strong></span></td>
-                </tr>
-              ))}
-            </table>
-          </div>
+          {!isMobile &&
+            <div className="overflow-auto h-3/4 w-fit p-4 mt-auto mb-auto">
+              <table className="table">
+                {cities && cities.map((city, index) => (
+                  <tr className="hover" key={index}>
+                    <th>{index}</th>
+                    <td>{city.city && <><strong>{city.city}</strong> <br /></>}</td>
+                    <td><button className="btn bg-primary text-black w-fit" onClick={() => { getIngatlanURL(city); }}>Ingatlan.com</button></td>
+                    <td><button className="btn bg-primary text-black w-fit" onClick={() => { getOtpOtthonURL(city); }}>otpotthon.hu</button></td>
+                    <td className="flex w-fit mt-auto "><span className="badge badge-secondary w-24"><strong>{Math.round(city.travel_time / 60)}  perc</strong></span></td>
+                  </tr>
+                ))}
+              </table>
+            </div>
+          }
+
         </div>
         {/* SHOWING MAP BESIDE MARKERS */}
 
@@ -188,7 +246,7 @@ const Cities = () => {
                 {/* Cities markers */}
 
                 <Marker position={selectedCityCoords} icon={centerIcon}>
-                  <Popup>This is Your Search</Popup>
+                  <Popup>{searchedCityName}</Popup>
                 </Marker>
 
                 <MarkerClusterGroup>
@@ -215,7 +273,22 @@ const Cities = () => {
             )}
           </div>
         </div>
-      </div></>
+        {isMobile && cities &&
+
+          <ul className="fixed bottom-1 menu menu-horizontal lg:menu-horizontal w-screen flex justify-center items-center rounded-box">
+            <li><a onClick={() => setIsSearhMenuVisible(true)}><MagnifyingGlassCircleIcon className="h-6 w-6 text-white" /></a></li>
+            <li><a onClick={() => setIsMenuVisible(true)}><ChevronDoubleUpIcon className="h-6 w-6 text-white" /></a></li>
+          </ul>
+        }
+      </div>
+
+      {isMobile && cities &&
+        <>
+          <BottomMenu cities={cities} isVisible={isMenuVisible} onClose={() => setIsMenuVisible(false)} />
+          <BottomSearhMenu isVisible={isSearhMenuVisible} onClose={() => setIsSearhMenuVisible(false)} city={searchedCityName} travelTime={travelTime} travelMode={travelMode} cityCoordinates={selectedCityCoords} setError={setShowError} setErrorMessage={setErrorMessage} />
+        </>
+      }
+    </>
   );
 
 }

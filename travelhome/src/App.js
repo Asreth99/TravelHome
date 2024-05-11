@@ -9,6 +9,7 @@ import Login from './Components/Login';
 import Register from "./Components/Register.js";
 import { AuthProvider } from "./Services/Contexts/authContext/index.js";
 import SavedProperties from "./Components/SavedProperties.js";
+import Alert from "./Components/AlertMessage.js";
 
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
       path: "/login",
       element: <Login />,
     },
-  
+
     {
       path: "/cities",
       element: <Cities />,
@@ -40,11 +41,13 @@ function App() {
   ];
   let routesElement = useRoutes(routesArray);
   return (
-    
-      <AuthProvider>
-        <NavigationBar/>
-        <div className="w-full flex flex-col z-20">{routesElement}</div>
-      </AuthProvider>
+
+    <AuthProvider>
+      
+      <NavigationBar />
+
+      <div className="w-full flex flex-col z-20">{routesElement}</div>
+    </AuthProvider>
   );
 }
 

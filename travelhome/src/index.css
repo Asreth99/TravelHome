@@ -5,9 +5,66 @@
 
 
 
-.leaflet-container{
+.leaflet-container {
   margin-left: auto;
   margin-right: 5vh;
   height: 80vh;
   width: 100vh;
+}
+
+
+
+
+.alert {
+  position: absolute;
+  margin: auto;
+  z-index: 1000;
+}
+
+.toast-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media only screen and (max-width: 600px) {
+
+
+  .flex {
+    margin: 0;
+    padding: 0;
+  }
+
+  .leaflet-container {
+    margin: auto;
+    width: 100vw;
+    height: 85vh;
+    
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .table tbody tr td {
+    display: block;
+    text-align: right;
+  }
+
+  .table tbody tr td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+  }
 }

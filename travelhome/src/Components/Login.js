@@ -1,8 +1,11 @@
-import { Form, Button } from "react-bootstrap";
 import { doSignInUserWithEmailAndPassword } from "../Services/Contexts/firebase/auth";
 import { useAuth } from "../Services/Contexts/authContext/index.js"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from 'react-router-dom'
+import Alert from "./AlertMessage.js";
+import Toast from "./ToastMessage.js";
+
+
 
 const Login = () => {
 
@@ -11,12 +14,35 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [isSigningIn, setIsSigningIn] = useState(false)
 
+    const [showError, setShowError] = useState(false);
+    const [ErrorMessage, setErrorMessage] = useState('');
+
+  
+
+
+
+    useEffect(() => {
+        let timeout;
+        if (showError) {
+            timeout = setTimeout(() => {
+                setShowError(false);
+            }, 3000);
+        }
+    }, [showError]);
+
     const onSubmit = async (e) => {
-        console.log(email);
         e.preventDefault()
+
         if (!isSigningIn) {
             setIsSigningIn(true);
-            await doSignInUserWithEmailAndPassword(email, password);
+            try {
+                await doSignInUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                setShowError(true);
+                setErrorMessage("Helytelen Bejelentkezés.");
+                setIsSigningIn(false);
+            }
+
             // doSendEmailVerification()
         }
     }
@@ -24,6 +50,10 @@ const Login = () => {
     return (
         <>
             {userLoggedIn && (<Navigate to={'/'} replace={true} />)}
+            {showError &&
+                <Alert error={showError} message={ErrorMessage} />
+            }
+            
             <div className="hero min-h-screen bg-base-200">
                 <div className="hero-content flex-col lg:flex-row-reverse">
                     <div className="text-center lg:text-left">
@@ -36,13 +66,13 @@ const Login = () => {
                                 <label className="label">
                                     <span className="label-text" >Email</span>
                                 </label>
-                                <input type="email" placeholder="email" className="input input-bordered" required onChange={(e) => setEmail(e.target.value)}/>
+                                <input type="email" placeholder="email" className="input input-bordered" required onChange={(e) => setEmail(e.target.value)} />
                             </div>
                             <div className="form-control">
                                 <label className="label">
                                     <span className="label-text">Password </span>
                                 </label>
-                                <input type="password" placeholder="password" className="input input-bordered" required onChange={(e) => setPassword(e.target.value)}/>
+                                <input type="password" placeholder="password" className="input input-bordered" required onChange={(e) => setPassword(e.target.value)} />
                                 <label className="label">
                                     <a href="#" className="label-text-alt link link-hover">Forgot password?</a>
                                 </label>
@@ -59,7 +89,16 @@ const Login = () => {
                         </form>
                     </div>
                 </div>
-            </div></>
+
+            </div>
+
+            
+           
+
+        </>
+
+
+
 
     );
 }

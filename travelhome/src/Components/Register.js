@@ -1,13 +1,24 @@
-import { Form, Button } from "react-bootstrap";
-import React, { useState } from 'react'
-import { Navigate, Link, useNavigate } from 'react-router-dom'
+import React, { useState,useEffect } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../Services/Contexts/authContext/index'
 import { doCreateUserWithEmailAndPassword } from '../Services/Contexts/firebase/auth';
-import { getAuth, updateProfile } from "firebase/auth";
+import Alert from "./AlertMessage.js";
+
 const Register = () => {
 
     const { userLoggedIn, updateDisplayName } = useAuth()
 
+    const [showError, setShowError] = useState(false);
+    const [ErrorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        let timeout;
+        if (showError) {
+          timeout = setTimeout(() => {
+            setShowError(false);
+          }, 3000);
+        }
+      }, [showError]);
 
 
 
@@ -17,12 +28,24 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setconfirmPassword] = useState('');
     const [name, setName] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        await doCreateUserWithEmailAndPassword(email, password);
-        await updateDisplayName(name);
+        console.log("passw: "+password+" confirm passw: "+confirmPassword);
+        if(password !== confirmPassword){
+            setShowError(true);
+            setErrorMessage("A beírt jelszavak nem egyeznek!");
+            return;
+        }
+
+        try{
+            await doCreateUserWithEmailAndPassword(email, password);
+            await updateDisplayName(name);
+        }catch(error){
+            setShowError(true);
+            setErrorMessage("Hiba a regisztráció során!");
+        }
+        
 
 
 
@@ -34,6 +57,9 @@ const Register = () => {
 
         <>
             {userLoggedIn && (<Navigate to={'/'} replace={true} />)}
+            {showError &&
+                <Alert error={showError} message={ErrorMessage}/>
+            }
             <div className="hero min-h-screen bg-base-200">
                 <div className="hero-content flex-col lg:flex-row-reverse">
                     <div className="text-center lg:text-left">

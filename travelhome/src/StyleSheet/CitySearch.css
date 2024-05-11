@@ -1,0 +1,26 @@
+@media (max-width: 768px) {
+    .flex-grow-1 {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      
+    }
+    .autocomplete{
+        margin-bottom: 2rem;
+    }
+    .citySearch-card{
+        border: none;
+    }
+    .citySearch-label{
+        margin-bottom: 2rem;
+    }
+
+    .citySearch-btn{
+        width: 10rem;
+    }
+    .citySearch-flex{
+        margin-top: 0;
+        margin-left: 0;
+    }
+  }
+ 

@@ -7,7 +7,11 @@ module.exports = {
    
   ],
   theme: {
-    extend: {},
+    extend: {
+      transitionProperty: {
+        enable: 'all',
+      },
+    },
   },
   plugins: [
     require('daisyui'),
