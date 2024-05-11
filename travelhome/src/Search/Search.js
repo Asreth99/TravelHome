@@ -7,10 +7,10 @@ import "../StyleSheet/Search.css"
 
 
 const Search = () => {
-  const [cityName, setCityName] = useState('evosoft, 5, Horváth Mihály utca, Belváros, Szeged, Szegedi járás, Csongrád-Csanád, South Great Plain, Great Plain and North, 6720, Hungary');
-  const [cityCoords, setCityCoords] = useState([46.2552141, 20.1513543]);
-  const [traveltime, settraveltime] = useState(600);
-  const [travelmode, settravelmode] = useState('driving');
+  const [cityName, setCityName] = useState('');
+  const [cityCoords, setCityCoords] = useState([]);
+  const [traveltime, settraveltime] = useState();
+  const [travelmode, settravelmode] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
   const [buyOrRent, setBuyOrRent] = useState('kiado');
