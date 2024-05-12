@@ -63,7 +63,7 @@ router.get("/geocodeSearch", async (req, res) => {
 
         //Setting up the attributes for the timeMap search
         const departure_search1 = {
-            id: 'isocrhone',
+            id: 'map_polygon',
             departure_time: new Date().toISOString(),
             travel_time: parseInt(traveltime),
             coords: { lat: coordinates[1], lng: coordinates[0] },
