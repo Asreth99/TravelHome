@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
+    "build": "webpack --config webpack.config.js",
     "start": "node index"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
     "pg": "^8.5.1",
+    "run": "^1.5.0",
     "traveltime-api": "^5.7.0"
   },
   "devDependencies": {

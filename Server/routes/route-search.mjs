@@ -20,7 +20,7 @@ router.get("/autoCompleteSearch", async (req, res) => {
     try {
         res.setHeader("Access-Control-Allow-Origin", "*");
         const cityName = req.query.cityName;
-        const geocodeSearch = await travelTimeClient.geocoding(cityName, { params: { "within.country": "HU" } });
+        const geocodeSearch = await travelTimeClient.geocoding(cityName, {acceptLanguage:'HUN', params: { "within.country": "HU" } });
 
         if (geocodeSearch.features.length > 0) {
             const city = geocodeSearch.features[0].properties.name;
@@ -30,6 +30,7 @@ router.get("/autoCompleteSearch", async (req, res) => {
             res.json({ city: null, cityCoordinates: null });
         }
     } catch (error) {
+        console.log(error);
         res.json({ city: null, cityCoordinates: null });
     }
 });
@@ -201,6 +202,7 @@ router.get("/geocodeSearch", async (req, res) => {
                 res.status(200).json({ error: 'An error occurred' });
             });
     } catch (error) {
+        console.log(error);
         res.status(200).send({ error: 'An error occurred' });
         return;
     }
