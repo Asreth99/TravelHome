@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MarkerClusterGroup from 'react-leaflet-cluster';
+import axios from "axios";
+
 
 import "leaflet/dist/leaflet.css";
 import { Icon } from 'leaflet';
@@ -148,7 +150,6 @@ const Cities = () => {
         if (parts[1] === 'kertek') {
           parts = [parts[0] + parts[1], ...parts.slice(2)];
         }
-        console.log(parts);
         return parts.join('-');
       });
       formattedCity = `${formattedCity[1]}-${formattedCity[0]}`;
@@ -157,7 +158,7 @@ const Cities = () => {
     window.open(ingatlanURL, '_blank');
   };
 
-  const getOtpOtthonURL = (city) => {
+  const getOtpOtthonURL = async (city) => {
     const cityNameWithoutAccents = removeAccents(city.city.toLowerCase());
     const formattedCityName = cityNameWithoutAccents.split(',');
     let formattedCity = formattedCityName;
@@ -169,11 +170,31 @@ const Cities = () => {
         }
         return parts.join('-');
       });
-      formattedCity = `${formattedCity[1]}-${formattedCity[0]}`;
+
+      if (formattedCity[1] === 'budapest') {
+        let cityName = '';
+        await axios.get("https://travelhome.onrender.com/autoCompleteSearch", {
+          params: {
+            cityName: city.city,
+          },
+        }).then((response) => {
+          const cities = response.data.city;
+          cityName = removeAccents(cities.toLowerCase());
+        });
+        const removeDotFromDist = cityName.split(',');
+        if (removeDotFromDist[1]) {
+          const district = removeDotFromDist[1].trim().split('.')[0];
+          removeDotFromDist[1] = `${district}-kerulet`;
+          formattedCity.push(removeDotFromDist[1]);
+          
+        }
+      }
+      
+      formattedCity = `${formattedCity[1]}-${formattedCity[2]}-${formattedCity[0]}`;
     }
 
     const URL = `https://www.otpotthon.hu/${formattedCity}+kiado+lakas`;
-
+  
     window.open(URL, '_blank');
   }
 

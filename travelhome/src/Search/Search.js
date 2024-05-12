@@ -58,7 +58,6 @@ const Search = () => {
           setCityCoords([cityCoords]);
 
         } else {
-
           setSuggestions([]);
         }
 
