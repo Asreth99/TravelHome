@@ -15,6 +15,7 @@
 
 
 
+
 .alert {
   position: absolute;
   margin: auto;
@@ -38,9 +39,11 @@
   }
 
   .leaflet-container {
-    margin: auto;
+    position: fixed;
+    top: 4rem;
+    left: 0;
     width: 100vw;
-    height: 85vh;
+    height: calc(100vh - 14rem);
     
   }
 

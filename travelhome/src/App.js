@@ -43,8 +43,8 @@ function App() {
     <AuthProvider>
       
       <NavigationBar />
-
       <div className="w-full flex flex-col z-20">{routesElement}</div>
+
     </AuthProvider>
   );
 }

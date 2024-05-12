@@ -108,8 +108,7 @@ const BottomMenu = ({ isVisible, onClose, cities }) => {
 
         const URL = `https://www.otpotthon.hu/${formattedCity}+${buyOrRent}+${propertyType}+${priceSegment}`;
 
-        console.log(URL);
-        //window.open(URL, '_blank');
+        window.open(URL, '_blank');
     }
     const removeAccents = (str) => {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");

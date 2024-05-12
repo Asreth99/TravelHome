@@ -16,6 +16,7 @@ const Search = () => {
   const [buyOrRent, setBuyOrRent] = useState('kiado');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [priceLabel, setPriceLabel] = useState('ezer Ft/hó');
   const [propertyType, setPropertyType] = useState('lakas');
 
   const [showError, setShowError] = useState(false);
@@ -156,19 +157,19 @@ const Search = () => {
 
               <select className="select bg-white w-full max-w-xs mx-5 text-black border-black	" value={traveltime} onChange={handleTraveltime}>
                 <option disabled selected>Utazás Ideje</option>
-                <option value={300}>0h 5min</option>
-                <option value={600}>0h 10min</option>
-                <option value={900}>0h 15min</option>
-                <option value={1200}>0h 20min</option>
-                <option value={1500}>0h 25min</option>
-                <option value={1800}>0h 30min</option>
-                <option value={2100}>0h 35min</option>
-                <option value={2400}>0h 40min</option>
-                <option value={2700}>0h 45min</option>
-                <option value={3000}>0h 50min</option>
-                <option value={3300}>0h 55min</option>
-                <option value={3600}>1h 0min</option>
-                <option value={3900}>1h 5min</option>
+                <option value={300}>5 perc</option>
+                <option value={600}>10 perc</option>
+                <option value={900}>15 perc</option>
+                <option value={1200}>20 perc</option>
+                <option value={1500}>25 perc</option>
+                <option value={1800}>30 perc</option>
+                <option value={2100}>35 perc</option>
+                <option value={2400}>40 perc</option>
+                <option value={2700}>45 perc</option>
+                <option value={3000}>50 perc</option>
+                <option value={3300}>55 perc</option>
+                <option value={3600}>1 óra </option>
+                <option value={3900}>1 óra 5 perc</option>
               </select>
 
 
@@ -193,7 +194,10 @@ const Search = () => {
                     className="radio checked:bg-black-500 border-white size-5"
                     value="elado"
                     checked={buyOrRent === "elado"}
-                    onChange={(e) => { setBuyOrRent(e.target.value) }}
+                    onChange={(e) => { 
+                      setBuyOrRent(e.target.value);
+                      setPriceLabel("millió Forint");
+                    }}
                   />
                   <span className="label-text text-white ml-3"><strong>Eladó</strong></span>
                 </label>
@@ -206,12 +210,16 @@ const Search = () => {
                     value="kiado"
                     checked={buyOrRent === "kiado"}
 
-                    onChange={(e) => { setBuyOrRent(e.target.value) }}
+                    onChange={(e) => { 
+                      setBuyOrRent(e.target.value);
+                      setPriceLabel("ezer Ft/hó");
+
+                     }}
                   />
                   <span className="label-text text-white ml-3"><strong>Kiadó</strong></span>
                 </label>
               </div>
-              <div className="flex items-center w-50 mr-5">
+              <div className="flex items-center w-50 ml-4">
                 <div className="form-control ">
                 <input type="text" maxLength={4} pattern="[0-9]{4}" placeholder="Min" className="input search-input input-bordered bg-white w-20" onChange={(e) => { setMinPrice(e.target.value) }} />
                 </div>
@@ -224,6 +232,7 @@ const Search = () => {
                 <div className="form-control">
                 <input type="text" maxLength={4} pattern="[0-9]{4}" placeholder="Max" className="input search-input input-bordered bg-white w-20" onChange={(e) => { setMaxPrice(e.target.value) }} />
                 </div>
+                <span className="label label-text search-label-text text-black"><strong>{priceLabel}</strong></span>
               </div>
 
               <select className="select bg-white mx-5 max-w-xs text-black border-black" value={propertyType} onChange={(e) => { setPropertyType(e.target.value) }}>

@@ -48,7 +48,7 @@ const Cities = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [FeedbackMessage, setFeedbackMessage] = useState('');
 
-  
+
   const [showError, setShowError] = useState(false);
   const [ErrorMessage, setErrorMessage] = useState('');
 
@@ -197,9 +197,16 @@ const Cities = () => {
       }
 
       {showFeedback &&
-        <Toast feedback={showFeedback} message={FeedbackMessage}/>
+        <Toast feedback={showFeedback} message={FeedbackMessage} />
       }
       <div className="flex items-center justify-center h-screen z-0 ">
+
+        {isMobile && cities &&
+          <ul className="fixed bottom-0 bg-secondary menu menu-horizontal lg:menu-horizontal w-screen flex justify-center items-center">
+            <li><a onClick={() => setIsSearhMenuVisible(true)}><MagnifyingGlassCircleIcon className="h-6 w-6 text-white" /></a></li>
+            <li><a onClick={() => setIsMenuVisible(true)}><ChevronDoubleUpIcon className="h-6 w-6 text-white" /></a></li>
+          </ul>
+        }
 
         <div className="h-screen flex flex-col items-center justify-center">
           {searchedCityName && !isMobile &&
@@ -272,14 +279,9 @@ const Cities = () => {
               </MapContainer>
             )}
           </div>
-        </div>
-        {isMobile && cities &&
 
-          <ul className="fixed bottom-1 menu menu-horizontal lg:menu-horizontal w-screen flex justify-center items-center rounded-box">
-            <li><a onClick={() => setIsSearhMenuVisible(true)}><MagnifyingGlassCircleIcon className="h-6 w-6 text-white" /></a></li>
-            <li><a onClick={() => setIsMenuVisible(true)}><ChevronDoubleUpIcon className="h-6 w-6 text-white" /></a></li>
-          </ul>
-        }
+        </div>
+
       </div>
 
       {isMobile && cities &&
